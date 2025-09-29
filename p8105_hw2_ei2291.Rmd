@@ -1,0 +1,106 @@
+---
+title: "p8105_hw2_ei2291"
+author: "Eman Ibrahim"
+output: github_document
+date: "2025-09-28"
+---
+
+```{r}
+library(tidyverse)
+```
+
+##Problem 1
+
+Import and cleaning the datasets
+
+```{r}
+pols_month_df=
+  read_csv("fivethirtyeight_datasets/pols-month.csv") |> 
+  janitor::clean_names()
+
+unemployment_df=
+  read_csv("fivethirtyeight_datasets/unemployment.csv") |> 
+  janitor::clean_names()
+
+snp_df=
+  read_csv("fivethirtyeight_datasets/snp.csv") |> 
+  janitor::clean_names()
+```
+
+Clean pols-month.csv
+
+```{r}
+pols_month_df=
+  separate(pols_month_df, mon, into = c("year", "month", "day"), sep = "-") |> 
+  mutate(
+    month=month.name[as.numeric(month)],
+    prezident=ifelse(prez_gop ==1, "gop", "dem"),
+    year=as.integer(year)
+    ) |> 
+    select(-prez_gop, -prez_dem, -day)
+  
+```
+
+Clean snp.csv
+
+```{r}
+snp_df=
+  separate(snp_df,date, into=c("month", "day", "year"), sep = "/") |> 
+  mutate(
+    year=ifelse(
+      as.integer(year)>=50, 
+      as.integer(year)+1900, 
+      as.integer(year)+2000),
+    month=month.name[as.numeric(month)]
+  ) |> 
+  arrange(year, month) |> 
+  select(year, month, everything(),-day) 
+  
+```
+
+Clean unemployment.csv
+
+```{r}
+unemployment_df=
+  pivot_longer(unemployment_df,
+    cols= jan:dec,
+    names_to= "month",
+    values_to="unemployment"
+  ) |> 
+  mutate(
+    month=str_to_title(month),
+    month=match(month, month.abb),
+    month=month.name[month]
+  ) |> 
+  arrange(year, month) 
+  
+```
+
+Merging snp into pols
+
+```{r}
+merge_df=
+  left_join(pols_month_df, snp_df, by= c("year", "month")) |> 
+  left_join(unemployment_df, by = c("year","month")) |> 
+  arrange(year, month)
+```
+
+
+About the datasets
+
+From my understanding the `pols-momths.csv` contains data on pols for each U.S. party, the `snp.csv` contains data on stock market I think, and the `unemployment.csv` is on unemployment rates in the U.S. All datasets show what happened each month throughout those years. We then cleaned and merged all by year and month. The key variables are: `year`, `month`, `prezident`,`close`, and `unemployment`.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
