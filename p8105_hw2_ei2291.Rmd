@@ -142,7 +142,7 @@ trash_df=
   bind_rows(Mr_trash_df, 
             Professor_trash_df, 
             Gwynnda_trash_df) |> 
-  relocate(wheel) |> 
+  relocate(wheel, year, month) |> 
   arrange(wheel, year, month)
 ```
 
@@ -175,6 +175,86 @@ total_cigarette_butts_Gwynnda_trash_df=
 ```
 
 The total number of cigarette butts collected by Gwynnda in June 2022 was 18120 butts.
+
+
+##Problem 3
+
+```{r}
+library(tidyverse)
+```
+
+Import and clean dataset
+```{r}
+zipcodes_county_df=
+  read_csv("Zip Codes.csv") |> 
+  janitor::clean_names() |> 
+  mutate(
+    county = case_when(
+    county == "New York" ~ "Manhattan",
+    county == "Kings" ~ "Brooklyn",
+    county == "Richmond" ~ "Staten Island",
+    TRUE ~ county)
+  ) |> 
+  distinct(zip_code,.keep_all=TRUE)
+  
+```
+
+Import and clean dataset2
+```{r}
+zipcodes_neighborhood_df=
+  read_csv("Zip codes neighborhood.csv") |> 
+  janitor::clean_names() |> 
+  pivot_longer(
+    cols = starts_with ("x20"),
+    names_to= "date",
+    values_to = "zori"
+  ) |> 
+  rename(county=county_name,
+         zip_code=region_id) |> 
+  mutate(date = lubridate::ymd(str_remove(date, "x")),
+         county = case_when(
+    county == "New York County" ~ "Manhattan",
+    county == "Kings County" ~ "Brooklyn",
+    county == "Richmond County" ~ "Staten Island",
+    county == "Queens County" ~ "Queens",
+    county == "Bronx County" ~ "Bronx",
+    TRUE ~ county))
+```
+
+Join datasets
+```{r}
+combined_df=
+  left_join(zipcodes_neighborhood_df, zipcodes_county_df, by="zip_code") |> 
+  select(-county.y) |> 
+  rename(county = county.x) |> 
+  relocate(zip_code,county) |> 
+  arrange(zip_code, county)
+```
+
+No. of observations, unique zip codes, and unique neighborhoods
+
+```{r}
+nrow(combined_df)
+n_distinct(combined_df$zip_code)
+n_distinct(combined_df$region_name)
+```
+There are 17,284 total number of observations; 149 number of unique zipcodes, and 149 number of unique neighborhoods.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
